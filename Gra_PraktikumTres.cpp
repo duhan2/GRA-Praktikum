@@ -160,10 +160,6 @@ public:
 
 
 
-
-
-
-
 		Mat dest(grayImage.size(), CV_8UC3); // Im Prak das Farbbild mit den Tasten
 
 
@@ -171,304 +167,243 @@ public:
 		if (case2 == 1) {
 
 			Mat tempgray = grayImage.clone();
-
-
 			blur(grayImage, tempgray, Size(3, 3));
-
-
 			medianBlur(grayImage, grayImage, 23);
-
 			grayImage = grayImage - tempgray;
-
-
-
 			threshold(grayImage, grayImage, 10, 255, THRESH_BINARY_INV);
+			Vec3b weiss(255, 255, 255);
 
+			if (zImage2.data != NULL && counter == TRUE) {
 
+				Mat tempzImage(Size(zImage.cols, zImage.rows), CV_32FC1);
+				Mat mask(Size(zImage.cols, zImage.rows), CV_32FC1,Scalar(0));
 
-			Vec3b weiss(255, 255, 255); // a
+				//cout << "x: " << x_koor << endl;
+				//cout << "y: " << y_koor << endl;
+				//cout << "width " << width << endl;
+				//cout << "height: " << height << endl;
 
+				rectangle(mask, Rect(x_koor, y_koor, width, height), Scalar(1), -1, 8, 0);
+				imshow("mask", mask);
 
-
-			if (zImage2.data != NULL) {
-
-				Mat tempzImage;
-				
-				Mat mask = zImage.clone();
-
-				rectangle(mask, Rect(x_koor, y_koor, width, height), weiss, -1, 8, 0);
-
-
-				subtract(zImage2, zImage, tempzImage, mask);
-				 
-
-				
-				
-
-				cout << "zImage.type: " << zImage.type() << endl;
-				cout <<"zImage2.type: "<<zImage2.type() << endl;
-
-				double zmin1, zmin2, zmax1, zmax2,difmin,difmax;
-				minMaxLoc(zImage, &zmin1, &zmax1);
-				minMaxLoc(zImage2, &zmin2, &zmax2);
-
-
-				cout << "zImage minval:" << zmin1 << "zImage maxval:" << zmax1 << endl;
-				cout << "zImage2 minval:" << zmin2 << "zImage2 maxval:" << zmax2 << endl;
-
-
-				
-				//tempzImage = zImage2 - zImage;
-				
-				
-
-				minMaxLoc(tempzImage, &difmin, &difmax);
-
-				std::cout << "DIFMinval= " << difmin << std::endl;
-				std::cout << "DIFMaxval= " << difmax << std::endl;
-
-				cout << "tempzImage.channels: " << tempzImage.channels() << endl;
+				//subtract(zImage2, zImage, tempzImage, mask,CV_32FC1);
+				tempzImage = zImage2 - zImage; 
+				multiply(tempzImage, mask, tempzImage);
 
 				imshow("DIF", tempzImage);
 
+				double zmin1, zmin2, zmax1, zmax2, difmin, difmax;
+				minMaxLoc(zImage, &zmin1, &zmax1);
+				minMaxLoc(zImage2, &zmin2, &zmax2);
+				minMaxLoc(tempzImage, &difmin, &difmax);
+
+
+				//cout << "zImage minval: " << zmin1 << " zImage maxval: " << zmax1 << endl;
+				//cout << "zImage2 minval: " << zmin2 << " zImage2 maxval: " << zmax2 << endl;
+				//cout << "tempzImage minval: " << difmin << " tempzImage maxval: " << difmax << endl;
+
+				float schwelle = -0.01;
+				float schwelle2 = 0.01;
+
+				Mat bild_großer(Size(zImage.cols, zImage.rows), CV_8UC1, Scalar(0)); 
+				Mat bild_kleiner(Size(zImage.cols, zImage.rows), CV_8UC1, Scalar(0));
+
 				
-
-
-				tempzImage.convertTo(tempzImage, CV_8UC1);
-				cout << "LOL" << endl;
-
-				double schwelle = 0.1; // Die Schwelle muss herausgefunden werden 
-
-				Mat bild1 = Mat::zeros(Size(tempzImage.cols, tempzImage.rows), CV_8UC1);
-				Mat bild2 = Mat::zeros(Size(tempzImage.cols, tempzImage.rows), CV_8UC1);
-
-				cout << "bild1 data: " << "c: " << bild1.channels() << "t: " << bild1.type() << "cols: " << bild1.cols << "rows: " << bild1.rows << endl;
-				cout << "bild2 data: " << "c: " << bild2.channels() << "t: " << bild2.type() << "cols: " << bild2.cols << "rows: " << bild2.rows << endl;
-				cout << "tempZ data: " << "c: " << tempzImage.channels() << "t: " << tempzImage.type() << "cols: " << tempzImage.cols << "rows: " << tempzImage.rows << endl;
-
-				
-				cout << "tempZ rows: " << tempzImage.rows << endl;
-				cout << "tempZ cols: " << tempzImage.cols << endl;
-
 				for (int x = 0; x < tempzImage.rows; x++) {
 
-				for (int y = 0; y < tempzImage.cols; y++) {
+					for (int y = 0; y < tempzImage.cols; y++) {
 
-					if (tempzImage.at<uchar>(x, y) > schwelle){
+						if (tempzImage.at<float>(x, y) > schwelle2)
+							bild_großer.at<uchar>(x, y) = 255.0;
 
-						bild1.at<uchar>(x, y) = 255.0;
+						if (tempzImage.at<float>(x, y) < schwelle)
+							bild_kleiner.at<uchar>(x, y) = 255.0;
 					
 					}
 
-					if (tempzImage.at<uchar>(x, y) < schwelle){
+				}
+				
 
-						bild2.at<uchar>(x, y) = 255.0;
-					
-					}
+				//Opening auf die Bilder
+				Mat element = getStructuringElement(MORPH_CROSS, Size(3, 3));
+				morphologyEx(bild_großer, bild_großer, MORPH_OPEN, element);
+				morphologyEx(bild_kleiner, bild_kleiner, MORPH_OPEN, element);
 
-								}
-
-						}
+				imshow("bild_großer", bild_großer);
+				imshow("bild_kleiner", bild_kleiner);
 
 				
-				//Opening auf die Binärbilder
-
-				Mat element = getStructuringElement(MORPH_CROSS, Size(3, 3));
-
-				morphologyEx(bild1, bild1, MORPH_OPEN, element);
-
-				morphologyEx(bild2, bild2, MORPH_OPEN, element);
-
-				imshow("bild1", bild1);
-				imshow("bild2", bild2);
-
-
 				//Einfärben der Pixel im Ergebnisbild
+				vector<Mat>channels;
+				Mat ergebnis = tempzImage.clone(); // Mit Maske
+				ergebnis.convertTo(ergebnis, CV_8UC3);
 
-				/*vector<Mat>channels;
-				Mat ergebnis;
-
-				Mat green = Mat::zeros(Size(tempzImage.rows, tempzImage.cols), CV_8UC1); // Ist CV_8UC1 richtig? Auch bei binary Pictures?
-
-				channels.push_back(bild2); // Blau
-
+				Mat green = Mat::zeros(Size(tempzImage.cols, tempzImage.rows), CV_8UC1);
+				channels.push_back(bild_großer); // Blau
 				channels.push_back(green); //Grün
-
-				channels.push_back(bild1); // Rot
-
+				channels.push_back(bild_kleiner); // Rot
 
 				merge(channels, ergebnis);
-
 				imshow("Ergebnis", ergebnis);
-				*/
 			
+				
+				Mat dest(zImage.size(), CV_32FC3);
+				//Mat temp_dest = dest.clone();
+				for (int x = 0; x < dest.rows; x++) {
+					for (int y = 0; y < dest.cols; y++) {
+						if (bild_großer.at<uchar>(x, y) == 255.0) { // Markieren der Pixel in dest_temp 
+							dest.at<float>(x, y)[0] = 155; // blau
+							dest.at<float>(x, y)[1] = 155; //gruen
+							dest.at<float>(x, y)[2] = 155; //rot
+						}
+					}
+				}
+				imshow("dest", dest); // Mit den markierten Pixeln
+
+				//color in dest
+				int dest_rot = 0, dest_gelb = 0, dest_blau = 0, dest_gruen = 0, dest_violett = 0, dest_orange = 0, dest_braun = 0, dest_pink = 0;
+				for (int i = 0; i < labelstemp.size(); i++) {
+					if (labelstemp[i].color == Vec3b(255, 0, 0))
+						dest_rot == labelstemp[i].area;			// rows x cols = area  = pixel
+					if (labelstemp[i].color == Vec3b(0, 255, 0))
+						dest_gelb == labelstemp[i].area;
+					if (labelstemp[i].color == Vec3b(0, 0, 255))
+						dest_blau == labelstemp[i].area;
+					if (labelstemp[i].color == Vec3b(0, 255, 127))
+						dest_gruen == labelstemp[i].area;
+					if (labelstemp[i].color == Vec3b(138, 43, 226))
+						dest_violett == labelstemp[i].area;
+					if (labelstemp[i].color == Vec3b(255, 165, 0))
+						dest_orange == labelstemp[i].area;
+					if (labelstemp[i].color == Vec3b(139, 69, 19))
+						dest_braun == labelstemp[i].area;
+					if (labelstemp[i].color == Vec3b(255, 20, 147))
+						dest_pink == labelstemp[i].area;
+				}
+
+
+				//count colors in temp_dest
+				int rot = 0, gelb = 0, blau = 0, gruen = 0, violett = 0, orange = 0, braun = 0, pink = 0;
+				for (int x = 0; x < dest.rows; x++) {
+					for (int y = 0; y < dest.cols; y++) {
+						if (dest.at<uchar>(x, y)[2] == 255 && dest.at<uchar>(x, y)[1] == 0 && dest.at<uchar>(x, y)[0] == 0) // BGR
+							rot += 1;
+						if (dest.at<uchar>(x, y)[2] == 0 && dest.at<uchar>(x, y)[1] == 255 && dest.at<uchar>(x, y)[0] == 0)
+							gelb += 1;
+						if (dest.at<uchar>(x, y)[2] == 0 && dest.at<uchar>(x, y)[1] == 0 && dest.at<uchar>(x, y)[0] == 255)
+							blau += 1;
+						if (dest.at<uchar>(x, y)[2] == 0 && dest.at<uchar>(x, y)[1] == 255 && dest.at<uchar>(x, y)[0] == 127)
+							gruen += 1;
+						if (dest.at<uchar>(x, y)[2] == 138 && dest.at<uchar>(x, y)[1] == 43 && dest.at<uchar>(x, y)[0] == 226)
+							violett += 1;
+						if (dest.at<uchar>(x, y)[2] == 255 && dest.at<uchar>(x, y)[1] == 165 && dest.at<uchar>(x, y)[0] == 0)
+							orange += 1;
+						if (dest.at<uchar>(x, y)[2] == 139 && dest.at<uchar>(x, y)[1] == 69 && dest.at<uchar>(x, y)[0] == 19)
+							braun += 1;
+						if (dest.at<uchar>(x, y)[2] == 255 && dest.at<uchar>(x, y)[1] == 20 && dest.at<uchar>(x, y)[0] == 147)
+							pink += 1;
+					}
+				}
+
+
+				//sum
+				int sum_rot = 0, sum_gelb = 0, sum_blau = 0, sum_gruen = 0, sum_violett = 0, sum_orange = 0, sum_braun = 0, sum_pink = 0;
+				sum_rot = dest_rot - rot;
+				sum_blau = dest_blau - blau;
+				sum_gelb = dest_gelb - gelb;
+				sum_gruen = dest_gruen - gruen;
+				sum_violett = dest_violett - violett;
+				sum_orange = dest_orange - orange;
+				sum_braun = dest_braun - braun;
+				sum_pink = dest_pink - pink;
+
+				cout << "Pixel marked in label rot: " << sum_rot << endl;
+				cout << "Pixel marked in label gelb: " << sum_gelb << endl;
+				cout << "Pixel marked in label blau: " << sum_blau << endl;
+				cout << "Pixel marked in label gruen: " << sum_gruen << endl;
+				cout << "Pixel marked in label violett: " << sum_violett << endl;
+				cout << "Pixel marked in label orange: " << sum_orange << endl;
+				cout << "Pixel marked in label braun: " << sum_braun << endl;
+				cout << "Pixel marked in label pink: " << sum_pink << endl;
+
+
+				// ... jetzt muss geguckt werden , wo die meisten markiert worden sind 
+
+				
 			}
-	
+
 			zImage2 = zImage.clone();
 
-
-
-
 			//convert
-
 			grayImage.convertTo(grayImage, CV_8U);
-
-
-
-			Mat labelImage(grayImage.size(), CV_32S);
-
-			Mat stats, centroids;
-
-
 
 			vector<kombination> labels;
 
+			Mat labelImage(grayImage.size(), CV_32S);
+			Mat stats, centroids;
 
 
 			int nLabels = connectedComponentsWithStats(grayImage, labelImage, stats, centroids, 8, CV_32S);
 
 			//cout << "Found " << nLabels << "Labels." << endl;
 
-
-
-
-
 			vector<Vec3b>colors;
-
-
-
-
-
 			Vec3b rot(255, 0, 0); // a
-
 			Vec3b gelb(0, 255, 0); // b
-
 			Vec3b blau(0, 0, 255); // c
-
 			Vec3b gruen(0, 255, 127); // d
-
 			Vec3b violett(138, 43, 226); //e
-
 			Vec3b orange(255, 165, 0); //f
-
 			Vec3b braun(139, 69, 19); //g
-
 			Vec3b pink(255, 20, 147); //h
 
-
-
-
-
 			colors.push_back(rot);
-
 			colors.push_back(gelb);
-
 			colors.push_back(blau);
-
 			colors.push_back(gruen);
-
 			colors.push_back(violett);
-
 			colors.push_back(orange);
-
 			colors.push_back(braun);
-
 			colors.push_back(pink);
 
-
-
-
-
-
-
 			vector<char>letter;
-
-
-
-
-
 			char a('A');
-
 			char b('B');
-
 			char c('C');
-
 			char d('D');
-
 			char e('E');
-
 			char f('F');
-
 			char g('G');
-
 			char h('H');
 
-
-
 			letter.push_back(a);
-
 			letter.push_back(b);
-
 			letter.push_back(c);
-
 			letter.push_back(d);
-
 			letter.push_back(e);
-
 			letter.push_back(f);
-
 			letter.push_back(g);
-
 			letter.push_back(h);
-
-
-
-
-
-
-
-			for (int i = 0; i < colors.size(); i++) {
-
-				//cout << "color" << i << ": " << colors[i] << endl;
-
-			}
-
-
-
-
 
 			int count = 0;
 
-			//im Prak: Suche Tasten (Area)
-
 			for (int i = 1; i < nLabels; i++) {
-
 				//cout << "Label " << i << " Area: " << stats.at<int>(i, CC_STAT_AREA) << endl;
-
 				if (stats.at<int>(i, CC_STAT_AREA) > 1000)
-
 					count++;
-
 			}
 
 
 
 			if (count > 6) {
-
+				counter = TRUE;
 				//CCs mit dem gleichen Flächeninhalt finden und selektieren ( Prak) Bsp -> Zwischen 2 und 3,1k
-
 				for (int i = 1; i < nLabels; i++) { // 0 = background
-
 					if (stats.at<int>(i, CC_STAT_AREA) > 1000 && stats.at<int>(i, CC_STAT_AREA) < 3100) {
-
-						kombination tempkombi(centroids.at<double>(i, 1), centroids.at<double>(i, 0), i, stats.at<int>(i, CC_STAT_HEIGHT), stats.at<int>(i, CC_STAT_WIDTH), stats.at<int>(i, CC_STAT_AREA), stats.at<int>(i, CC_STAT_LEFT), stats.at<int>(i, CC_STAT_TOP));
-
+						kombination tempkombi(stats.at<int>(i, CC_STAT_TOP), stats.at<int>(i, CC_STAT_LEFT), i, stats.at<int>(i, CC_STAT_HEIGHT), stats.at<int>(i, CC_STAT_WIDTH), stats.at<int>(i, CC_STAT_AREA), stats.at<int>(i, CC_STAT_LEFT), stats.at<int>(i, CC_STAT_TOP));
 						labels.push_back(tempkombi);
-
-
-
+						
 					}
-
 				}
 
 				//cout << "---------------------------------------------------------------------------------------" << endl;
@@ -477,52 +412,31 @@ public:
 
 				/*for (int i = 0; i < labels.size(); i++) {
 
-					cout << "Label: " << labels[i].label << endl;
+				cout << "Label: " << labels[i].label << endl;
 
-					cout << "Label Area: " << labels[i].area << endl;
+				cout << "Label Area: " << labels[i].area << endl;
 
 				}*/
 
-
-
-
-
-
-
 				//Sortiere -
-
 				if (labels[0].height < labels[0].width) {
-
 					//Nach x-Koordinate
-
 					sort(labels.begin(), labels.end(), compare_y_koordinate);
-
 					//cout << "nach y-Koordinate sortiert" << endl;
-
-
-
 				}
 
 				else {
-
 					//Nach y-Koordinate
-
 					sort(labels.begin(), labels.end(), compare_x_koordinate);
-
 					//cout << "Nach x-Koordinate sortiert" << endl;
-
 				}
 
 
 
-
-
+				// Maske für Rectangle
 				x_koor = labels[0].x_koordinate;
-
 				y_koor = labels[0].y_koordinate;
-
 				width = labels[0].width * 8;
-
 				height = labels[0].height;
 
 
@@ -530,26 +444,17 @@ public:
 				if (labels.size() < 9) {
 
 					for (int i = 0; i < labels.size(); i++) {
-
 						labels[i].color = colors[i];
-
 						labels[i].letter = letter[i];
-
 						//cout << "Label Color: " << labels[i].color << endl;
-
-						rectangle(dest, Rect(labels[i].x_koordinate, labels[i].y_koordinate, labels[i].width, labels[i].height), labels[i].color, -1, 8, 0);
-
-
-
+						rectangle(dest, Rect(labels[i].x_koordinate, labels[i].y_koordinate, labels[i].width, labels[i].height), labels[i].color, -1, 8, 0); // Bei Misserfolg , die Pixel in dest anschauen
 					}
-
-
 
 				}
 
+				labelstemp = labels;
 			}
-
-
+			
 
 		} // case
 
@@ -566,14 +471,9 @@ public:
 
 
 		if (case2 == 2) {
-
 			writergray.write(grayImage);
-
 			writerdepth.write(zImage);
-
 		}
-
-
 
 	}
 
@@ -852,6 +752,10 @@ private:
 	double x_koor, y_koor;
 
 	int width, height;
+	
+	bool counter = FALSE;
+
+	vector<kombination> labelstemp;
 
 };
 
