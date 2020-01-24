@@ -42,7 +42,7 @@ struct kombination {
 
 	Vec3b color;
 
-	char letter;
+	string letter;
 
 	kombination(double y_koor, double x_koor, int lab, int hei, int wi, int ar, int le, int to) {
 
@@ -176,7 +176,7 @@ public:
 			if (zImage2.data != NULL && counter == TRUE) {
 
 				Mat tempzImage(Size(zImage.cols, zImage.rows), CV_32FC1);
-				Mat mask(Size(zImage.cols, zImage.rows), CV_32FC1,Scalar(0));
+				Mat mask(Size(zImage.cols, zImage.rows), CV_32FC1, Scalar(0));
 
 				//cout << "x: " << x_koor << endl;
 				//cout << "y: " << y_koor << endl;
@@ -187,7 +187,7 @@ public:
 				imshow("mask", mask);
 
 				//subtract(zImage2, zImage, tempzImage, mask,CV_32FC1);
-				tempzImage = zImage2 - zImage; 
+				tempzImage = zImage2 - zImage;
 				multiply(tempzImage, mask, tempzImage);
 
 				imshow("DIF", tempzImage);
@@ -205,10 +205,10 @@ public:
 				float schwelle = -0.01;
 				float schwelle2 = 0.01;
 
-				Mat bild_großer(Size(zImage.cols, zImage.rows), CV_8UC1, Scalar(0)); 
+				Mat bild_großer(Size(zImage.cols, zImage.rows), CV_8UC1, Scalar(0));
 				Mat bild_kleiner(Size(zImage.cols, zImage.rows), CV_8UC1, Scalar(0));
 
-				
+
 				for (int x = 0; x < tempzImage.rows; x++) {
 
 					for (int y = 0; y < tempzImage.cols; y++) {
@@ -218,11 +218,11 @@ public:
 
 						if (tempzImage.at<float>(x, y) < schwelle)
 							bild_kleiner.at<uchar>(x, y) = 255.0;
-					
+
 					}
 
 				}
-				
+
 
 				//Opening auf die Bilder
 				Mat element = getStructuringElement(MORPH_CROSS, Size(3, 3));
@@ -232,7 +232,7 @@ public:
 				imshow("bild_großer", bild_großer);
 				imshow("bild_kleiner", bild_kleiner);
 
-				
+
 				//Einfärben der Pixel im Ergebnisbild
 				vector<Mat>channels;
 				Mat ergebnis = tempzImage.clone(); // Mit Maske
@@ -245,67 +245,74 @@ public:
 
 				merge(channels, ergebnis);
 				imshow("Ergebnis", ergebnis);
-			
-				
-				Mat dest(zImage.size(), CV_32FC3);
+
+				int pixel_counter = 0;
 				//Mat temp_dest = dest.clone();
-				for (int x = 0; x < dest.rows; x++) {
-					for (int y = 0; y < dest.cols; y++) {
+				for (int x = 0; x < destcopy.rows; x++) {
+					for (int y = 0; y < destcopy.cols; y++) {
 						if (bild_großer.at<uchar>(x, y) == 255.0) { // Markieren der Pixel in dest_temp 
-							dest.at<float>(x, y)[0] = 155; // blau
-							dest.at<float>(x, y)[1] = 155; //gruen
-							dest.at<float>(x, y)[2] = 155; //rot
+							destcopy.at<Vec3b>(x, y) = Vec3b(155,155,155);
+							pixel_counter++;
+
 						}
 					}
 				}
-				imshow("dest", dest); // Mit den markierten Pixeln
+				//cout << "Pixels: " << pixel_counter << endl;
+				imshow("destcopy", destcopy); // Mit den markierten Pixeln
 
-				//color in dest
+				 //color in dest
 				int dest_rot = 0, dest_gelb = 0, dest_blau = 0, dest_gruen = 0, dest_violett = 0, dest_orange = 0, dest_braun = 0, dest_pink = 0;
-				for (int i = 0; i < labelstemp.size(); i++) {
-					if (labelstemp[i].color == Vec3b(255, 0, 0))
-						dest_rot == labelstemp[i].area;			// rows x cols = area  = pixel
-					if (labelstemp[i].color == Vec3b(0, 255, 0))
-						dest_gelb == labelstemp[i].area;
-					if (labelstemp[i].color == Vec3b(0, 0, 255))
-						dest_blau == labelstemp[i].area;
-					if (labelstemp[i].color == Vec3b(0, 255, 127))
-						dest_gruen == labelstemp[i].area;
-					if (labelstemp[i].color == Vec3b(138, 43, 226))
-						dest_violett == labelstemp[i].area;
-					if (labelstemp[i].color == Vec3b(255, 165, 0))
-						dest_orange == labelstemp[i].area;
-					if (labelstemp[i].color == Vec3b(139, 69, 19))
-						dest_braun == labelstemp[i].area;
-					if (labelstemp[i].color == Vec3b(255, 20, 147))
-						dest_pink == labelstemp[i].area;
+				for (int x = 0; x < destcopy2.rows; x++) {
+					for (int y = 0; y < destcopy2.cols; y++) {
+						if (destcopy2.at<Vec3b>(x, y)[0] == 0 && destcopy2.at<Vec3b>(x, y)[1] == 0 && destcopy2.at<Vec3b>(x, y)[2] == 255) // BGR
+							dest_rot += 1;
+						if (destcopy2.at<Vec3b>(x, y)[0] == 0 && destcopy2.at<Vec3b>(x, y)[1] == 255 && destcopy2.at<Vec3b>(x, y)[2] == 0)
+							dest_gelb += 1;
+						if (destcopy2.at<Vec3b>(x, y)[0] == 255 && destcopy2.at<Vec3b>(x, y)[1] == 0 && destcopy2.at<Vec3b>(x, y)[2] == 0)
+							dest_blau += 1;
+						if (destcopy2.at<Vec3b>(x, y)[0] == 127 && destcopy2.at<Vec3b>(x, y)[1] == 255 && destcopy2.at<Vec3b>(x, y)[2] == 0)
+							dest_gruen += 1;
+						if (destcopy2.at<Vec3b>(x, y)[0] == 226 && destcopy2.at<Vec3b>(x, y)[1] == 43 && destcopy2.at<Vec3b>(x, y)[2] == 138)
+							dest_violett += 1;
+						if (destcopy2.at<Vec3b>(x, y)[0] == 0 && destcopy2.at<Vec3b>(x, y)[1] == 165 && destcopy2.at<Vec3b>(x, y)[2] == 255)
+							dest_orange += 1;
+						if (destcopy2.at<Vec3b>(x, y)[0] == 19 && destcopy2.at<Vec3b>(x, y)[1] == 69 && destcopy2.at<Vec3b>(x, y)[2] == 139)
+							dest_braun += 1;
+						if (destcopy2.at<Vec3b>(x, y)[0] == 147 && destcopy2.at<Vec3b>(x, y)[1] == 20 && destcopy2.at<Vec3b>(x, y)[2] == 255)
+							dest_pink += 1;
+					}
 				}
-
+				//cout << "dest rot original: " << dest_rot << endl;
+				
 
 				//count colors in temp_dest
 				int rot = 0, gelb = 0, blau = 0, gruen = 0, violett = 0, orange = 0, braun = 0, pink = 0;
-				for (int x = 0; x < dest.rows; x++) {
-					for (int y = 0; y < dest.cols; y++) {
-						if (dest.at<uchar>(x, y)[2] == 255 && dest.at<uchar>(x, y)[1] == 0 && dest.at<uchar>(x, y)[0] == 0) // BGR
+				for (int x = 0; x < destcopy.rows; x++) {
+					for (int y = 0; y < destcopy.cols; y++) {
+						if (destcopy.at<Vec3b>(x, y)[0] == 0 && destcopy.at<Vec3b>(x, y)[1] == 0 && destcopy.at<Vec3b>(x, y)[2] == 255) // BGR
 							rot += 1;
-						if (dest.at<uchar>(x, y)[2] == 0 && dest.at<uchar>(x, y)[1] == 255 && dest.at<uchar>(x, y)[0] == 0)
+						if (destcopy.at<Vec3b>(x, y)[0] == 0 && destcopy.at<Vec3b>(x, y)[1] == 255 && destcopy.at<Vec3b>(x, y)[2] == 0)
 							gelb += 1;
-						if (dest.at<uchar>(x, y)[2] == 0 && dest.at<uchar>(x, y)[1] == 0 && dest.at<uchar>(x, y)[0] == 255)
+						if (destcopy.at<Vec3b>(x, y)[0] == 255 && destcopy.at<Vec3b>(x, y)[1] == 0 && destcopy.at<Vec3b>(x, y)[2] == 0)
 							blau += 1;
-						if (dest.at<uchar>(x, y)[2] == 0 && dest.at<uchar>(x, y)[1] == 255 && dest.at<uchar>(x, y)[0] == 127)
+						if (destcopy.at<Vec3b>(x, y)[0] == 127 && destcopy.at<Vec3b>(x, y)[1] == 255 && destcopy.at<Vec3b>(x, y)[2] == 0)
 							gruen += 1;
-						if (dest.at<uchar>(x, y)[2] == 138 && dest.at<uchar>(x, y)[1] == 43 && dest.at<uchar>(x, y)[0] == 226)
+						if (destcopy.at<Vec3b>(x, y)[0] == 226 && destcopy.at<Vec3b>(x, y)[1] == 43 && destcopy.at<Vec3b>(x, y)[2] == 138)
 							violett += 1;
-						if (dest.at<uchar>(x, y)[2] == 255 && dest.at<uchar>(x, y)[1] == 165 && dest.at<uchar>(x, y)[0] == 0)
+						if (destcopy.at<Vec3b>(x, y)[0] == 0 && destcopy.at<Vec3b>(x, y)[1] == 165 && destcopy.at<Vec3b>(x, y)[2] == 255)
 							orange += 1;
-						if (dest.at<uchar>(x, y)[2] == 139 && dest.at<uchar>(x, y)[1] == 69 && dest.at<uchar>(x, y)[0] == 19)
+						if (destcopy.at<Vec3b>(x, y)[0] == 19 && destcopy.at<Vec3b>(x, y)[1] == 69 && destcopy.at<Vec3b>(x, y)[2] == 139)
 							braun += 1;
-						if (dest.at<uchar>(x, y)[2] == 255 && dest.at<uchar>(x, y)[1] == 20 && dest.at<uchar>(x, y)[0] == 147)
+						if (destcopy.at<Vec3b>(x, y)[0] == 147 && destcopy.at<Vec3b>(x, y)[1] == 20 && destcopy.at<Vec3b>(x, y)[2] == 255)
 							pink += 1;
 					}
 				}
 
 
+				//cout << "transformed rot: " << rot << endl;
+			
+	
+				
 				//sum
 				int sum_rot = 0, sum_gelb = 0, sum_blau = 0, sum_gruen = 0, sum_violett = 0, sum_orange = 0, sum_braun = 0, sum_pink = 0;
 				sum_rot = dest_rot - rot;
@@ -317,7 +324,22 @@ public:
 				sum_braun = dest_braun - braun;
 				sum_pink = dest_pink - pink;
 
-				cout << "Pixel marked in label rot: " << sum_rot << endl;
+// ... jetzt muss geguckt werden , wo die meisten markiert worden sind 
+				int array[8] = {sum_rot,sum_blau,sum_gelb,sum_gruen,sum_violett,sum_orange,sum_braun,sum_pink};
+				
+				int groesste = 0;
+				for (int i = 0; i < 8; i++) {
+
+					if (groesste < array[i]){
+						
+						putText(dest, labelstemp[i].letter, Point(100, 100), FONT_HERSHEY_SIMPLEX, 1, Vec3b(255, 255, 255),2, 8, false);
+
+					}
+
+				}
+
+
+				/*cout << "Pixel marked in label rot: " << sum_rot << endl;
 				cout << "Pixel marked in label gelb: " << sum_gelb << endl;
 				cout << "Pixel marked in label blau: " << sum_blau << endl;
 				cout << "Pixel marked in label gruen: " << sum_gruen << endl;
@@ -325,12 +347,11 @@ public:
 				cout << "Pixel marked in label orange: " << sum_orange << endl;
 				cout << "Pixel marked in label braun: " << sum_braun << endl;
 				cout << "Pixel marked in label pink: " << sum_pink << endl;
+				*/
 
-
-				// ... jetzt muss geguckt werden , wo die meisten markiert worden sind 
-
-				
 			}
+
+		
 
 			zImage2 = zImage.clone();
 
@@ -348,14 +369,14 @@ public:
 			//cout << "Found " << nLabels << "Labels." << endl;
 
 			vector<Vec3b>colors;
-			Vec3b rot(255, 0, 0); // a
+			Vec3b rot(0, 0, 255); // a
 			Vec3b gelb(0, 255, 0); // b
-			Vec3b blau(0, 0, 255); // c
-			Vec3b gruen(0, 255, 127); // d
-			Vec3b violett(138, 43, 226); //e
-			Vec3b orange(255, 165, 0); //f
-			Vec3b braun(139, 69, 19); //g
-			Vec3b pink(255, 20, 147); //h
+			Vec3b blau(255, 0, 0); // c
+			Vec3b gruen(127, 255, 0); // d
+			Vec3b violett(226, 43, 138); //e
+			Vec3b orange(0, 165, 255); //f
+			Vec3b braun(19, 69, 139); //g
+			Vec3b pink(147, 20, 255); //h
 
 			colors.push_back(rot);
 			colors.push_back(gelb);
@@ -366,15 +387,15 @@ public:
 			colors.push_back(braun);
 			colors.push_back(pink);
 
-			vector<char>letter;
-			char a('A');
-			char b('B');
-			char c('C');
-			char d('D');
-			char e('E');
-			char f('F');
-			char g('G');
-			char h('H');
+			vector<string>letter;
+			string a("A");
+			string b("B");
+			string c("C");
+			string d("D");
+			string e("E");
+			string f("F");
+			string g("G");
+			string h("H");
 
 			letter.push_back(a);
 			letter.push_back(b);
@@ -399,10 +420,10 @@ public:
 				counter = TRUE;
 				//CCs mit dem gleichen Flächeninhalt finden und selektieren ( Prak) Bsp -> Zwischen 2 und 3,1k
 				for (int i = 1; i < nLabels; i++) { // 0 = background
-					if (stats.at<int>(i, CC_STAT_AREA) > 1000 && stats.at<int>(i, CC_STAT_AREA) < 3100) {
+					if (stats.at<int>(i, CC_STAT_AREA) > 500 && stats.at<int>(i, CC_STAT_AREA) < 3100) {
 						kombination tempkombi(stats.at<int>(i, CC_STAT_TOP), stats.at<int>(i, CC_STAT_LEFT), i, stats.at<int>(i, CC_STAT_HEIGHT), stats.at<int>(i, CC_STAT_WIDTH), stats.at<int>(i, CC_STAT_AREA), stats.at<int>(i, CC_STAT_LEFT), stats.at<int>(i, CC_STAT_TOP));
 						labels.push_back(tempkombi);
-						
+
 					}
 				}
 
@@ -453,8 +474,12 @@ public:
 				}
 
 				labelstemp = labels;
+				destcopy2 = dest.clone();
+				destcopy = dest.clone();
+				
+
 			}
-			
+
 
 		} // case
 
@@ -752,10 +777,12 @@ private:
 	double x_koor, y_koor;
 
 	int width, height;
-	
+
 	bool counter = FALSE;
 
 	vector<kombination> labelstemp;
+	Mat destcopy;
+	Mat destcopy2;
 
 };
 
